@@ -1,0 +1,392 @@
+---
+title: "Math 3636 Final Project Group 9"
+output:
+  html_notebook: default
+  pdf_document: default
+---
+
+## Loading Data Into R
+
+```{r}
+setwd("D:\\Documents\\R Codes\\Final Project")
+```
+
+
+```{r}
+heart <- read.csv("HeartData.csv")
+
+heart$sex <- factor(heart$sex)
+heart$cp <- factor(heart$cp)
+heart$fbs <- factor(heart$fbs)
+heart$restecg <- factor(heart$restecg)
+heart$exang <- factor(heart$exang) 
+heart$slope <- factor(heart$slope)
+heart$ca <- factor(heart$ca)
+heart$thal <- factor(heart$thal)
+
+summary(heart)
+
+```
+
+## Outliers:
+We checked for outliers within our data by visualualizing the data. 
+```{r}
+dev.new(width = 4, height = 4)
+
+plot(age ~ condition, data = heart)
+
+AgeOutliersRange <- c((quantile(heart$age)[2] - (quantile(heart$age)[4] - quantile(heart$age)[2])*1.5), (quantile(heart$age)[4] + (quantile(heart$age)[4] - quantile(heart$age)[2])*1.5))
+
+summary(heart$age)
+AgeOutliersRange
+
+AgeOutInd <- which(heart$age < AgeOutliersRange[1] | heart$age > AgeOutliersRange[2])
+
+#heart <- heart[- AgeOutInd, ]
+
+#plot(age ~ condition, data = heart)
+
+
+plot(trestbps ~ condition, data = heart)
+
+TrestbpsOutliersRange <- c((quantile(heart$trestbps)[2]-(quantile(heart$trestbps)[4] - quantile(heart$trestbps)[2])*(1.5)), (quantile(heart$trestbps)[4] + (quantile(heart$trestbps)[4] - quantile(heart$trestbps)[2])*(1.5)))
+
+summary(heart$trestbps)
+TrestbpsOutliersRange
+
+TrestbpsOutInd <- which(heart$trestbps < TrestbpsOutliersRange[1] | heart$trestbps > TrestbpsOutliersRange[2])
+
+heart <- heart[- TrestbpsOutInd, ]
+
+plot(trestbps ~ condition, data = heart)
+
+
+plot(chol ~ condition, data = heart)
+
+CholOutliersRange <- c((quantile(heart$chol)[2] - (quantile(heart$chol)[4] - quantile(heart$chol)[2])*1.5), (quantile(heart$chol)[4] + (quantile(heart$chol)[4] - quantile(heart$chol)[2])*1.5))
+
+summary(heart$chol)
+CholOutliersRange
+
+CholOutInd <- which(heart$chol < CholOutliersRange[1] | heart$chol > CholOutliersRange[2])
+
+heart <- heart[- CholOutInd, ]
+
+plot(chol ~ condition, data = heart)
+
+
+plot(thalach ~ condition, data = heart)
+
+ThalachOutliersRange <- c((quantile(heart$thalach)[2] - (quantile(heart$thalach)[4] - quantile(heart$thalach)[2])*1.5), (quantile(heart$thalach)[4] + (quantile(heart$thalach)[4] - quantile(heart$thalach)[2])*1.5))
+
+summary(heart$thalach)
+ThalachOutliersRange
+
+ThalachOutliersInd <- which(heart$thalach < ThalachOutliersRange[1] | heart$thalach > ThalachOutliersRange[2])
+
+heart <- heart[- ThalachOutliersInd, ]
+
+plot(thalach ~ condition, data = heart)
+
+
+plot(oldpeak ~ condition, data = heart)
+
+OldpeakOutliersRange <- c((quantile(heart$oldpeak)[2] - (quantile(heart$oldpeak)[4] - quantile(heart$oldpeak)[2])*1.5), (quantile(heart$oldpeak)[4] + (quantile(heart$oldpeak)[4] - quantile(heart$oldpeak)[2])*1.5))
+
+summary(heart$oldpeak)
+OldpeakOutliersRange
+
+OldpeakOutliersInd <- which(heart$oldpeak < OldpeakOutliersRange[1] | heart$oldpeak > OldpeakOutliersRange[2])
+
+heart <- heart[- OldpeakOutliersInd, ]
+
+plot(oldpeak ~ condition, data = heart)
+```
+
+
+## Confusion Matrix for sex and condition:
+```{r}
+table(heart$sex,heart$condition)
+```
+
+
+## Linear Model:
+
+```{r}
+heartfit1 <- lm(condition ~., data = heart)
+
+summary(heartfit1)
+
+```
+
+Plot residuals of linear model:
+
+```{r}
+par(mar=c(4,4,1,1), mfrow=c(1,2))
+plot(heartfit1$fitted.values, ylab = "Predicted Values")
+plot(heartfit1$residuals, ylab = "Residuals")
+
+plot(heartfit1)
+```
+
+
+## Linear Model Reduced:
+
+```{r}
+heartfit1Reduced <- lm(condition ~sex + cp + ca + thal + trestbps + chol + slope + oldpeak, data = heart)
+
+summary(heartfit1Reduced)
+
+```
+
+Plot residuals of linear model Reduced:
+
+```{r}
+par(mar=c(4,4,1,1), mfrow=c(1,2))
+plot(heartfit1Reduced$fitted.values, ylab = "Predicted Values")
+plot(heartfit1Reduced$residuals, ylab = "Residuals")
+
+plot(heartfit1Reduced)
+```
+
+
+## Generalized Linear Model probit:
+
+```{r}
+heartfitprobit <- glm(formula = condition~., family = binomial(link = "probit"), data = heart)
+
+summary(heartfitprobit)
+```
+
+Plot residuals of this model:
+
+```{r}
+par(mar=c(4,4,1,1), mfrow=c(1,2))
+plot(heartfitprobit$fitted.values, ylab = "Predicted Values")
+plot(heartfitprobit$residuals, ylab = "Residuals")
+
+plot(heartfitprobit)
+```
+This model is good because Residuals are uniform.
+
+## Generalized Linear Model Probit Reduced:
+
+```{r}
+heartfitprobitreduced <- glm(formula = condition ~ sex + cp + ca + thal + trestbps + chol + slope + oldpeak, family = binomial(link = "probit"), data = heart)
+
+summary(heartfitprobitreduced)
+```
+
+Plot residuals of this model:
+
+```{r}
+par(mar=c(4,4,1,1), mfrow=c(1,2))
+plot(heartfitprobitreduced$fitted.values, ylab = "Predicted Values")
+plot(heartfitprobitreduced$residuals, ylab = "Residuals")
+
+plot(heartfitprobitreduced)
+```
+This model is good because Residuals are uniform.
+
+
+## Generalized Linear Model Logit:
+
+```{r}
+heartfit2 <- glm(formula = condition ~., family = binomial(link = "logit"), data = heart)
+
+summary(heartfit2)
+
+```
+
+Plot residuals of this model:
+
+```{r}
+par(mar=c(4,4,1,1), mfrow=c(1,2))
+plot(heartfit2$fitted.values, ylab = "Predicted Values")
+plot(heartfit2$residuals, ylab = "Residuals")
+
+plot(heartfit2)
+```
+This model is good because Residuals are uniform.
+
+
+## Generalized Linear Model Logit Reduced:
+
+```{r}
+heartfit2reduced <- glm(formula = condition ~ sex + cp + ca + thal + trestbps + chol + slope + oldpeak, family = binomial(link = "logit"), data = heart)
+
+summary(heartfit2reduced)
+
+```
+
+Plot residuals of this model:
+
+```{r}
+par(mar=c(4,4,1,1), mfrow=c(1,2))
+plot(heartfit2reduced$fitted.values, ylab = "Predicted Values")
+plot(heartfit2reduced$residuals, ylab = "Residuals")
+
+plot(heartfit2reduced)
+```
+This model is good because Residuals are uniform.
+
+
+## Predict Linear Model and Calculate Accuracy:
+
+```{r}
+pred <- predict(heartfit1, newdata = heart, type = "response")
+
+pred2 <- ifelse(pred < 0.54, 0, 1)
+
+res <- data.frame(Obs = heart$condition, Pre = pred2)
+
+calACC <- function(p1, p2) {
+  
+  return(sum(diag(table(p1, p2))) / length(p1))
+
+}
+
+calACC(p1 = heart$condition, p2 = pred2)
+
+```
+
+Confusion Matrix:
+
+```{r}
+table(heart$condition, pred2)
+```
+
+
+## Predict Linear Model Reduced and Calculate Accuracy:
+
+```{r}
+pred <- predict(heartfit1Reduced, newdata = heart, type = "response")
+
+pred2 <- ifelse(pred < 0.54, 0, 1)
+
+res <- data.frame(Obs = heart$condition, Pre = pred2)
+
+calACC <- function(p1, p2) {
+  
+  return(sum(diag(table(p1, p2))) / length(p1))
+
+}
+
+calACC(p1 = heart$condition, p2 = pred2)
+
+```
+
+Confusion Matrix:
+
+```{r}
+table(heart$condition, pred2)
+```
+
+
+## Predict Generalized Linear Model Probit and Calculate Accuracy:
+
+```{r}
+pred <- predict(heartfitprobit, newdata = heart, type = "response")
+
+pred2 <- ifelse(pred < 0.54, 0, 1)
+
+res <- data.frame(Obs = heart$condition, Pre = pred2)
+
+calACC <- function(p1, p2) {
+  
+  return(sum(diag(table(p1, p2))) / length(p1))
+
+}
+
+calACC(p1 = heart$condition, p2 = pred2)
+
+```
+
+Confusion Matrix:
+
+```{r}
+table(heart$condition, pred2)
+```
+
+
+## Predict Generalized Linear Model Reduced Probit and Calculate Accuracy:
+
+```{r}
+pred <- predict(heartfitprobitreduced, newdata = heart, type = "response")
+
+pred2 <- ifelse(pred < 0.54, 0, 1)
+
+res <- data.frame(Obs = heart$condition, Pre = pred2)
+
+calACC <- function(p1, p2) {
+  
+  return(sum(diag(table(p1, p2))) / length(p1))
+
+}
+
+calACC(p1 = heart$condition, p2 = pred2)
+
+```
+
+Confusion Matrix:
+
+```{r}
+table(heart$condition, pred2)
+```
+
+
+## Predict Generalized Linear Model Logit and Calculate Accuracy:
+
+```{r}
+pred <- predict(heartfit2, newdata = heart, type = "response")
+
+pred2 <- ifelse(pred < 0.54, 0, 1)
+
+res <- data.frame(Obs = heart$condition, Pre = pred2)
+
+calACC <- function(p1, p2) {
+  
+  return(sum(diag(table(p1, p2))) / length(p1))
+
+}
+
+calACC(p1 = heart$condition, p2 = pred2)
+
+```
+
+Confusion Matrix:
+
+```{r}
+table(heart$condition, pred2)
+```
+
+
+## Predict Generalized Linear Model Reduced Logit and Calculate Accuracy:
+
+```{r}
+pred <- predict(heartfit2reduced, newdata = heart, type = "response")
+
+pred2 <- ifelse(pred < 0.54, 0, 1)
+
+res <- data.frame(Obs = heart$condition, Pre = pred2)
+
+calACC <- function(p1, p2) {
+  
+  return(sum(diag(table(p1, p2))) / length(p1))
+
+}
+
+calACC(p1 = heart$condition, p2 = pred2)
+
+```
+
+Confusion Matrix:
+
+```{r}
+table(heart$condition, pred2)
+```
+
+```{r}
+table(heart$sex, heart$condition)
+```
+
